@@ -1,0 +1,29 @@
+<?php
+require_once "export.php";
+require_once "collexport.php";
+
+function collexport_menu() {
+
+  $items['admin/config/coll/collexport_settings'] =
+  array(
+    'title' => 'Collection Export settings',
+    'description' => 'Select the fileds for exporting.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('_collexport_admin_settings_form'),
+    'access arguments' => array('admin collection'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+
+  $items['admin/config/coll/export'] =
+  array(
+    'title' => 'Export Collections',
+    'description' => 'Export Collections in CSV format',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('_collexport_export_form'),
+    'access arguments' => array('admin collection'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+
+  return $items;
+}
+

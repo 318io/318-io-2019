@@ -1,0 +1,295 @@
+<?php
+
+require_once "reasoner.php";
+require_once "sphinxapi-2.0.4.php";
+
+require_once "expsearch.admin.inc";
+
+global $kb;
+
+$kb = new KBase();
+$kb->addRule(chain('hasDesc', array('hasChild')));
+$kb->addRule(chain('hasDesc', array('hasChild', 'hasDesc')));
+
+$kb->addRule(grule(term('hasParent', 'A', 'B'),
+                   array(term('hasChild', 'B', 'A'))
+                  )
+            );
+
+$kb->addRule(grule(term('hasAnc', 'A', 'B'),
+                   array(term('hasDesc', 'B', 'A'))
+                  )
+            );
+
+_build_kbase();
+
+function _build_kbase() {
+
+  global $kb;
+
+  $term_objs = taxonomy_term_load_multiple(_term_id_array());
+
+  foreach($term_objs as $term) {
+    $parents = taxonomy_get_parents($term->tid);
+    foreach($parents as $parent) {
+      //drupal_set_message(strval($parent->tid) . ", " . strval($term->tid));
+      $kb->addFact("hasChild", array(strval($parent->tid), strval($term->tid)));
+    }
+  }
+
+  // set equal
+  // $kb->setEqual('a','b')
+  // $node->job_post_company['und'][0]['value']
+  // for taxonomy term
+  //$term_id_1 = $node->field_term['und'][0]['tid'];
+  //$term_id_2 = $node->field_term['und'][1]['tid'];
+
+}
+
+
+function expsearch_menu() {
+  $items['admin/config/expsearch'] = array(
+    'title' => 'Search Expansioin',
+    'description' => 'Expanding the search capability.',
+    'position' => 'right',
+    'weight' => -5,
+    'page callback' => 'system_admin_menu_block_page',
+    'access arguments' => array('administer site configuration'),
+    'file' => 'system.admin.inc',
+    'file path' => drupal_get_path('module', 'system'),
+  );
+
+  $items['admin/config/expsearch/settings'] =
+  array(
+    'title' => 'Search Expansion settings',
+    'description' => 'Select the fileds for searching.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('expsearch_admin_settings'),
+    'access arguments' => array('administer site configuration'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+
+  return $items;
+}
+
+
+/*
+array {
+  ["error"]   => string(0) ""
+  ["warning"] => string(0) ""
+  ["status"]  => int(0)
+  ["fields"]  => array { [0]=> string(7) "content" }
+  ["attrs"]   => array { ["nid"]=> int(1) }
+  ["matches"] => array(93) {
+    [10001] => array(2) {
+      ["weight"]=> string(1) "1"
+      ["attrs"] =>  array(1) { ["nid"] => int(10001) }
+    }
+    [10003]=>
+    ...
+  }
+  ["total"] => string(2) "93"
+  ["total_found"] => string(2) "93"
+  ["time"] => string(5) "0.000"
+  ["words"] => array {
+    ["明信"] => array {
+      ["docs"] => string(2) "93"
+      ["hits"] => string(2) "93"
+    }
+  }
+}
+*/
+function sphinx_query($query, $index) {
+  $cl = new SphinxClient();
+  $cl->SetLimits(0, 1);
+  $peek_result = $cl->Query($query, $index);
+
+  $total = isset($peek_result['total_found']) ? intval($peek_result['total_found']) : 0 ;
+
+  if($total == 0) return array();
+
+  //drupal_set_message($total);
+  $cl->SetLimits(0,$total);
+  $result = $cl->Query($query, $index);
+
+  $matches = isset($result['matches']) ? $result['matches'] : array() ;
+
+  $nids = array();
+  foreach($matches as $id => $match) {
+    $nids[] = $id;
+  }
+  return $nids;
+}
+
+function ft_search($query) {
+  //drupal_set_message("doing fulltext searching.");
+  if(variable_get('index_table', 1) == 0) $index = 'idx318public';
+  else                                    $index = 'idx318archive';
+  return sphinx_query($query, $index);
+}
+
+/*
+ *  return array of tid
+ */
+function _get_related_terms($term_id) {
+  global $kb;
+  if(isset($kb)) {
+    $_tids = $kb->query('hasDesc', array($term_id, '?'));
+    return array_map(function($item){ return intval($item); }, $_tids);
+  } else {
+    drupal_set_message("_get_related_terms(): knowledge base is null.");
+    return array();
+  }
+}
+
+
+function term_search($term_name) {
+  // possible terms
+
+  $terms = taxonomy_get_term_by_name($term_name);
+
+  //dbug_message($terms);
+
+  $pre1 = NULL;
+  foreach($terms as $term) {
+
+    //drupal_set_message("searching term " . $term->tid);
+
+    $related_tids = _get_related_terms($term->tid);
+    array_unshift($related_tids, $term->tid); // add itself
+
+    $pre2 = NULL;
+    foreach($related_tids as $tid) {
+      $nids = taxonomy_select_nodes($tid, FALSE);
+
+      //dbug_message($nids);
+
+      if(isset($pre)) $pre2 = array_intersect($pre2, $nids);
+      else            $pre2 = $nids;
+    }
+
+    if(isset($pre1)) {
+      if(isset($pre2)) $pre1 = array_intersect($pre1, $pre2);
+    } else {
+      $pre1 = $pre2;
+    }
+  }
+
+  //dbug_message($pre1);
+  return isset($pre1) ? $pre1 : array();
+}
+
+function extract_words($str) {
+  $space_tok = " \n\t";
+
+  $ret = array();
+  $tok = strtok($str, $space_tok);
+  while($tok !== false) {
+    $ret[] = $tok;
+    $tok = strtok($space_tok);
+  }
+  return $ret;
+}
+
+function _node_id_array() {
+  $records = db_query("SELECT nid FROM node WHERE type = :type", array(':type' => 'collection'));
+  $ids = array();
+  foreach($records as $record) { $ids[] = $record->nid; }
+  return $ids;
+}
+
+function _term_id_array() {
+  $records = db_query("SELECT tid FROM taxonomy_term_data");
+  $ids = array();
+  foreach($records as $record) { $ids[] = $record->tid; }
+  return $ids;
+}
+
+function _reorder_array(array $a) {
+  $new_array = array();
+  foreach($a as $i) { $new_array[] = $i; }
+  return $new_array;
+}
+
+function reset_all_query() {
+  variable_set('all_query', array());
+}
+
+function expsearch_coll_query($query_string, $start_record, $records_per_page) {
+  //variable_del($query_string);  // TODO : remove later
+  //$old_result = variable_get($query_string);
+
+  reset_all_query(); // no cache
+
+  if(empty($query_string)) {
+    $all_ids = _node_id_array();
+  } else {
+
+    $all_ids = array();
+
+    $all_query = variable_get('all_query');
+    $old_result = !empty($all_query[$query_string]) ? $all_query[$query_string] : NULL;
+
+    if(empty($old_result)) {
+      $query_toks = extract_words($query_string);
+
+      $all_ids = array_reduce($query_toks, function($acc, $tok) {
+        $ids = term_search($tok);
+        //dbug_message($ids);
+        if(count($ids) == 0) $ids = ft_search($tok);
+
+        if(empty($acc)) return $ids;
+        else return array_intersect($acc, $ids);
+      }, array());
+
+      // variable_set($query_string, $all_ids);
+      $all_query = variable_get('all_query', array());
+      $all_query[$query_string] = $all_ids;
+      variable_set('all_query', $all_query);
+    } else {
+      $all_ids = $old_result;
+    }
+  }
+
+  $record_count = count($all_ids);
+
+  //drupal_set_message("records: " . $record_count);
+  //drupal_set_message("start: " . $start_record);
+  //drupal_set_message("per page: " . $records_per_page);
+
+  $all_ids = _reorder_array($all_ids);
+
+  $page_ids = array();
+  if($start_record < $record_count) {
+    $limit = $start_record + $records_per_page;
+    for($i = $start_record; $i < $limit; $i++) {
+      if(empty($all_ids[$i])) break;
+      $page_ids[] = $all_ids[$i];
+    }
+  }
+
+  //dbug_message($page_ids);
+
+  $result = array(
+    'qsh' => $query_string,
+    'count' => $record_count,
+    'identifier' => $page_ids,
+  );
+  return $result;
+}
+
+/* for Backup
+
+  $records = db_query("SELECT count(*) AS num FROM ft_table");
+
+  $count = 0;
+  foreach($records as $record) {
+    $count = intval($record->num);
+  }
+
+  //dbug_message($num_of_record);
+
+  if($count > 0) drupal_set_message("expsearch_node_load(): table built.");
+  else drupal_set_message("expsearch_node_load(): empty full text search table.");
+
+*/
