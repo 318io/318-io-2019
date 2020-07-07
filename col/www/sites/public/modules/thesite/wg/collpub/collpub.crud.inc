@@ -1,4 +1,7 @@
 <?php
+
+require_once "collpub.crud.set.php";
+
 function _collpub_sync_drush() {
   _dt_switch_to_maintenance('網站維護中');
   watchdog('sync', 'start');
@@ -30,7 +33,7 @@ function _collpub_crud_form($form, &$form_state) {
     );
   $form['import']['import_file'] =
     array(
-      '#title' => t('File to import'),
+      '#title' => t('Collection file to import'),
       '#type' => 'managed_file',
       '#description' => t('Choose a file (.xlsx or .csv).'),
       '#default_value' => '',
@@ -45,6 +48,27 @@ function _collpub_crud_form($form, &$form_state) {
       '#type' => 'submit',
       '#value' => t('Import'),
     );
+
+  // 2019 set import
+  $set_vars = _set_ef_variables();
+  $form['import']['import_set_file'] =
+    array(
+      '#title' => t('Set file to import'),
+      '#type' => 'managed_file',
+      '#description' => t('Choose a file (.csv). 請先匯入collection後，再匯入set。'),
+      '#default_value' => '',
+      '#upload_validators' => array(
+        'file_validate_extensions' => array('csv'),
+      ),
+      '#upload_location' => $set_vars['path']['source'],
+      '#process' => array('_file_element_process')
+    );
+  $form['import']['button_import_set'] =
+    array(
+      '#type' => 'submit',
+      '#value' => t('匯入特藏集'),
+    );
+
   return $form;
 }
 
@@ -62,6 +86,18 @@ function _collpub_crud_form_submit($form, &$form_state) {
         return;
       }
       break;
+    case $values['button_import_set']:
+      $file = file_load($values['import_set_file']);
+      $uploaded = file_save($file);
+      if ($uploaded == TRUE) {
+        $file_path = $file->uri;
+        _set_crud_process_import($file_path);
+      } else {
+        drupal_set_message(t('The file could not be uploaded. Please contact the site administrator.'), 'error');
+        return;
+      }
+      break;
+
   }
   return;
 }

@@ -81,7 +81,7 @@ function _collection_idv_file_update_form($nid, $filename, $op) {
     <p>Your browser doesn't have Flash, Silverlight or HTML5 support.</p>
   </div>
   <div id="fade"></div>
-  <div id='modal'><img id='loader' src='/sites/318_archive/modules/wg/editcol/images/ajax-loader.gif' /></div>
+  <div id='modal'><img id='loader' src='/sites/archive/modules/wg/editcol/images/ajax-loader.gif' /></div>
   <p><p>
    說明:
    <ul>

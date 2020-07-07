@@ -1,0 +1,36 @@
+.featuredimage {
+    display: inline-block;
+
+}
+
+.set-images {
+  padding-top: 1rem;
+
+  #selectable {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+
+    .ui-selecting {
+      background: #FECA40;
+    }
+
+    .ui-selected {
+      background: #F39814;
+      color: white;
+    }
+
+    li {
+      float: left;
+      //width: fit-content;
+      padding: 0.5rem;
+      text-align: center;
+      height: 265px;
+      //margin: 3px;
+    }
+  }
+}
+
+.button-row {
+  padding-bottom: 1rem;
+}

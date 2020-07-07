@@ -13,7 +13,7 @@ function get_archive_file_name($collection_id, $count, $src_file_name) {
  */
 function is_mosaic_file_pattern($src_file_name) {
   $name = filename_without_ext($src_file_name); // strip file extension
-  $name_arr = split('_', $name);
+  $name_arr = explode('_', $name);
   $length = count($name_arr);
   if($length > 1) {
     $last = $name_arr[$length-1];
@@ -33,7 +33,7 @@ function is_mosaic_file_pattern($src_file_name) {
 function is_file_of_collection($filename, $nid) {
   $snid = strval($nid);
   $name = filename_without_ext($filename);
-  $name_arr = split('_', $name);
+  $name_arr = explode('_', $name);
   $length = count($name_arr);
   if($length > 0) {
     $first = $name_arr[0];
@@ -641,7 +641,7 @@ function move_to_archive($src_file_or_dir, $node = null) {
     }
 
     // 2. move to archive directory
-    $targets = get_store_of_collection($new_id);
+    $targets = get_store_of_collection($new_id); // will create folder    
     $target_path = $targets[0];        //digicoll/archive/$store
     $target_zero_path = $targets[1];   //digicoll/archive0/$store
 
@@ -660,7 +660,7 @@ function move_to_archive($src_file_or_dir, $node = null) {
       drupal_set_message("move from $src_file_or_dir to $real_target");
 
       if(!rename($src_file_or_dir, $real_target)) {
-        drupal_set_message("move_to_archive():[file] cannot move from $src_file_or_dir to $real_target");
+        myddl("move_to_archive():[file] cannot move from $src_file_or_dir to $real_target", "BUG_editcol.upload.php");
         throw new Exception("move_to_archive():[file] cannot move from $src_file_or_dir to $real_target");
       }
 
@@ -767,10 +767,14 @@ function move_to_archive($src_file_or_dir, $node = null) {
     $empty_node->title = strval($new_id);
     $empty_node->field_repository_id[LANGUAGE_NONE][0]['value'] = $repository_id;
     $empty_node->field_identifier[LANGUAGE_NONE][0]['value']    = strval($new_id);
+    //myddl("saving node: {$new_id} => {$repository_id}", 'move_to_archive_log.txt');
+    //$_empty_node = node_submit($empty_node);
     node_save($empty_node);
 
+    $node_id = $empty_node->nid;
+
     return array(
-      'collection_id' => $new_id,
+      'collection_id' => $node_id,
       'repository_id' => $repository_id,
       'store'         => $store_dir,
       'files'         => $collection_files,
@@ -805,10 +809,11 @@ function bg_mconvert($archives, $ticket) {
   $module_path = DRUPAL_ROOT . DIRECTORY_SEPARATOR . drupal_get_path('module','editcol');
   $script = $module_path . DIRECTORY_SEPARATOR . 'mconvert2.php' . ' ' . $ticket;
   $drupal_dir = DRUPAL_ROOT;
-  $cmd = "/usr/bin/drush -q -l $base_url -r $drupal_dir php-script $script &";
+  $drush_path = get_drush_path();
+  $cmd = "{$drush_path} -q -l {$base_url} -r {$drupal_dir} php-script {$script} &";
   variable_set("archives_for_convert_$ticket", $archives); // invoke mconvert.php at background, it will get this variable to do the conversion
   $ret_code = proc_close(proc_open($cmd, array(), $foo));              // no blocking, run at background
-  if($ret_code == -1) { drupal_set_message("bg_mconvert(): external command error!!"); }
+  if($ret_code == -1) { myddl("bg_mconvert(): external command error!!", "BUG_editcol.upload.php"); }
 }
 
 
@@ -825,19 +830,20 @@ function bg_unzip_move_and_mconvert($mapping, $dir, $ticket) {
   $module_path = DRUPAL_ROOT . DIRECTORY_SEPARATOR . drupal_get_path('module','editcol');
   $script = $module_path . DIRECTORY_SEPARATOR . 'unzip.php' . ' ' . $dir . ' ' . $ticket;
   $drupal_dir = DRUPAL_ROOT;
-  $cmd = "/usr/bin/drush -q -l $base_url -r $drupal_dir php-script $script &";
+  $drush_path = get_drush_path();
+  $cmd = "{$drush_path} -q -l {$base_url} -r {$drupal_dir} php-script {$script} &";
   mylog($cmd, 'cmd.txt');
   variable_set("mapping_for_unzip_$ticket", $mapping); // invoke unzip.php at background, it will get this variable to do the unzip
 
   $ret_code = proc_close(proc_open($cmd, array(), $foo));          // no blocking, run at background
-  if($ret_code == -1) { drupal_set_message("bg_unzip_move_and_mconvert(): external command error!!"); }
+  if($ret_code == -1) { myddl("bg_unzip_move_and_mconvert(): external command error!!", "BUG_editcol.upload.php"); }
 }
 
 
 function bg_indexer() {
   $cmd = "/usr/bin/indexer --all --rotate &";
   $ret_code = proc_close(proc_open($cmd, array(), $foo));
-  if($ret_code == -1) { drupal_set_message("bg_indexer(): external command error!!"); }
+  if($ret_code == -1) { myddl("bg_indexer(): external command error!!", "BUG_editcol.upload.php"); }
 }
 
 /*
@@ -850,7 +856,7 @@ function bg_indexer() {
 function multiple_upload($source_dir, $repository_id_node_mapping = null, $delete_source_dir = true) {
 
   if(!is_dir($source_dir) || !$handler = opendir($source_dir)) {
-    drupal_set_message('multiple_upload(): cannot read source directory.');
+    myddl('multiple_upload(): cannot read source directory.', "BUG_editcol.upload.php");
     throw new Exception('multiple_upload(): cannot read source directory.');
   }
 
@@ -858,6 +864,10 @@ function multiple_upload($source_dir, $repository_id_node_mapping = null, $delet
 
   while (($file_or_dir = readdir($handler)) !== false) {
     if($file_or_dir == '.' || $file_or_dir == '..') continue;
+
+    // 2019.11.30 : 不把 xxx.ods 搬入 digicolls 內
+    $ext = extract_file_ext($file_or_dir);
+    if($ext == 'ods') continue;
 
     $repository_id = filename_without_ext($file_or_dir);
 
@@ -867,12 +877,14 @@ function multiple_upload($source_dir, $repository_id_node_mapping = null, $delet
       delete_collection_files($nid);  //20151217 add, if there are files of this collection, delete them first.
       $node = node_load($nid);
     }
-    $archives[] = move_to_archive($source_dir . DIRECTORY_SEPARATOR . $file_or_dir, $node);  // if $node is empty, a new node is created in move_to_archive
+
+    // if $node is empty, a new node is created in move_to_archive
+    $archives[] = move_to_archive($source_dir . DIRECTORY_SEPARATOR . $file_or_dir, $node); // @editcol.upload.php 
   }
 
   if($delete_source_dir) del_dir_tree($source_dir);
 
-  //mylog(print_r($archives, true), 'archives.txt');
+  //myddl(print_r($archives, true), 'archives.txt');
 
   bg_mconvert($archives, uniqid());
 }
@@ -897,6 +909,44 @@ function create_multiple_upload_nodes($dir) {
 
   $nodes = array();
 
+  // 2019.11.28 根據目錄內的元件典藏編號（檔名）做排序
+  $no_ordered_rids = [];
+  $set_file = NULL;
+  $collections = [];
+  while (($name = readdir($dir_handler)) !== false) {
+    if($name == '.' || $name == '..') continue;   // should ignore all .xxx
+
+    $ext = extract_file_ext($name);
+
+    if($ext == 'ods') {
+      $set_file = "{$dir}/{$name}";
+      continue;
+    }
+
+    $repository_id = filename_without_ext($name);
+    $no_ordered_rids[] = $repository_id;
+  }
+
+  sort($no_ordered_rids);
+
+  foreach($no_ordered_rids as $repository_id) {
+    // ft_table was inserted in new_empty_node();
+    $node = new_empty_node('', 'collection', Array('repository_id' => $repository_id));  // defined in easier.drupal.php
+    $nodes[$repository_id] = $node->nid;
+    $collections[] = $node->nid;
+  }
+
+  // import set metadata "{$dir}/set.xls"
+  if(!empty($set_file)) {
+    try {
+      import_set($set_file, $collections); // @editcor.set.php
+    } catch(Exception $e) {
+      watchdog('editcol::create_multiple_upload_nodes', $e->getMessage());
+    }
+  }
+
+  /*
+  // 2019.11.28 無排序（comment out)
   while (($name = readdir($dir_handler)) !== false) {
     if($name == '.' || $name == '..') continue;   // should ignore all .xxx
     $repository_id = filename_without_ext($name);
@@ -905,7 +955,7 @@ function create_multiple_upload_nodes($dir) {
     $node = new_empty_node('', 'collection', Array('repository_id' => $repository_id));  // defined in easier.drupal.php
 
     $nodes[$repository_id] = $node->nid;
-  }
+  }*/
 
   return $nodes;
 }

@@ -76,7 +76,7 @@ foreach($archives as $archive) {
 
     if(array_key_exists($ext, $video_format)) {
       $target = $target_path . DIRECTORY_SEPARATOR . $file_name_no_ext . '.webm';
-      $cmd = "/usr/bin/avconv -y -i $src -s '480x360' -f webm -bt 700k $target 2> /dev/null";
+      $cmd = "/usr/bin/ffmpeg -y -i $src -s '480x360' -f webm -bt 700k $target 2> /dev/null";
     } else if(array_key_exists($ext, $image_format)) {
       $target = $target_path . DIRECTORY_SEPARATOR . $file_name_no_ext . '.jpg';
       $cmd = "/usr/bin/convert $src $target 2> /dev/null";
@@ -93,7 +93,7 @@ foreach($archives as $archive) {
       $result[$file_name]['status'] = 'failure';
     }
   }
-  mylog(print_r($result, true), "convert_log_$collection_id.txt");
+  myddl(print_r($result, true), "convert_log_$collection_id.txt");
 }
 
 
@@ -106,7 +106,7 @@ echo drupal_realpath('public://') . "\n";
 $argv = drush_get_arguments();
 echo $argv[2] ;
 
-$cmd = 'avconv -y -i beauty.mp4 -f ogg -q:v 5 -acodec libvorbis -aq 60 out.ogv 2> /dev/null';
+$cmd = 'ffmpeg -y -i beauty.mp4 -f ogg -q:v 5 -acodec libvorbis -aq 60 out.ogv 2> /dev/null';
 
 $result = exec($cmd, $output, $status);
 

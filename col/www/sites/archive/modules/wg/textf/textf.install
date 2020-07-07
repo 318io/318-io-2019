@@ -1,0 +1,17 @@
+<?php
+
+/**
+ * Implements hook_field_schema().
+ */
+function textf_field_schema($field) {  
+  // Return array that contains.
+  return array(                  
+    'columns' => array(           
+      // In column there is a textf field.
+      'textf' => array(          
+        // Field has text type.
+        'type' => 'text',       
+      ), 
+    ), 
+  ); 
+}

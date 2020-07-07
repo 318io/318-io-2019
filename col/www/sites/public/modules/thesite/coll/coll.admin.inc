@@ -1,4 +1,5 @@
 <?php
+
 function _coll_item_save($values, $yaml = true, $tt='') {
   $opts = &drupal_static(__FUNCTION__);
 

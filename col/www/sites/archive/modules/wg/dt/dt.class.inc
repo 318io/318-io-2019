@@ -137,18 +137,18 @@ class DT {
   }
 
   static public function ogg2webm($video, $webm, $size='480x360', $tmppath = '/tmp') {
-    // use avconv
+    // use ffmpeg
     $video = drupal_realpath($video);
     $tmp = $tmppath.'/'.str_replace('/', '_', $video).'.webm';
-    $cmd = "avconv -i ".$video." -s ".$size." -bt 700k -ab 128k -f webm -y ".$tmp;
+    $cmd = "ffmpeg -i ".$video." -s ".$size." -bt 700k -ab 128k -f webm -y ".$tmp;
     @shell_exec($cmd);
     $webm = drupal_realpath($webm);
     rename($tmp, $webm);
   }
 
   static public function video_get_icon($video, $jpeg, $size='480x360', $itsoffset=104) {
-    // use avconv
-    $cmd = "avconv -y -itsoffset -".$itsoffset." -i ".$video." -vcodec mjpeg -vframes 1 -an -f rawvideo -s ".$size." ".$jpeg;
+    // use ffmpeg
+    $cmd = "ffmpeg -y -itsoffset -".$itsoffset." -i ".$video." -vcodec mjpeg -vframes 1 -an -f rawvideo -s ".$size." ".$jpeg;
     shell_exec($cmd);
   }
 

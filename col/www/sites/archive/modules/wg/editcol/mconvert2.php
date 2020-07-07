@@ -38,10 +38,10 @@ Designed to be called by drush.
 $argv   = drush_get_arguments();
 $ticket = $argv[2];
 
-if(empty($ticket)) { mylog('empty ticket', 'mconvert-bug.txt'); exit(0); }
+if(empty($ticket)) { myddl('empty ticket', 'mconvert-bug.txt'); exit(0); }
 
 $archives = variable_get("archives_for_convert_$ticket", array());
-if(empty($archives)) { mylog('empty archives', 'mconvert-bug.txt'); variable_del("archives_for_convert_$ticket"); exit(0); }
+if(empty($archives)) { myddl('empty archives', 'mconvert-bug.txt'); variable_del("archives_for_convert_$ticket"); exit(0); }
 
 variable_del("archives_for_convert_$ticket");
 
@@ -52,7 +52,7 @@ foreach($archives as $archive) {
 
   try {
     _coll_make_public($collection_id, false); // defined at coll/coll.inc, call dt::ogg2webm defined at dt/dt.class.inc
-                                              // use avconv -i in.ogv -s 480x360 -bt 700k -ab 128k -f webm -y out.webm
+                                              // use ffmpeg(or ffmpeg) -i in.ogv -s 480x360 -bt 700k -ab 128k -f webm -y out.webm
   } catch(Exception $e) {
     watchdog('editcol', $e->getMessage());
   }

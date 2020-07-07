@@ -55,6 +55,19 @@ function _coll_get_feature_image_uri($identifier) {
   return $f;
 }
 
+/* cooly
+function _wg_image_style($style_name, $path, $title = '') {
+  $i = array(
+         'style_name' => $style_name,
+         'path' => $path,
+         'width' => '',
+         'height' => '',
+         'alt' => $title,
+         'title' => $title,
+       );
+  return theme('image_style',$i);
+}
+*/
 function _coll_get_feature_image($identifier, $style_name = 'large', $linkurl=false, $retboolifnofile = false) {
   $f = false;
   $files = _coll_get_digifiles($identifier, 'public', 'webm');
@@ -138,6 +151,7 @@ function _coll_get_full_files($identifier) {
         $pathid = _coll_get_pathpart($identifier);
         $fileuri_pathpart = $vars['path']['archive'].'/'.$pathid.'/'.$fn;
         $archive = $fileuri_pathpart.'.tif'; // todo: is all download tif?
+        if(!file_exists($archive)) $archive = $fileuri_pathpart.'.jpg'; // 2019 add jpg support
         if(!file_exists($archive)) $archive = false;
         $files[$fn]['feature'] = _wg_image_style('large', $file, $identifier);
         $files[$fn]['icon'] = _wg_image_style('icon', $file, $identifier);
@@ -314,7 +328,8 @@ function _coll_make_public_public($identifier, $reset = false, $dry = false) {
 
   $files = _coll_get_digifiles($identifier, 'archive', 'ogv');
   if(!$files) {
-    $files = _coll_get_digifiles($identifier, 'archive', 'tif');
+    //$files = _coll_get_digifiles($identifier, 'archive', 'tif');
+    $files = _coll_get_digifiles($identifier, 'archive');
   }
 
   $vars = _coll_ef_variables();
@@ -327,6 +342,7 @@ function _coll_make_public_public($identifier, $reset = false, $dry = false) {
     $fileuri_pathpart   = $path_public.'/'.$pathid;
     $x = file_prepare_directory($fileuri_pathpart, FILE_CREATE_DIRECTORY | FILE_MODIFY_PERMISSIONS);
     switch ($p['extension']) {
+      case 'jpg':
       case 'tif':
         $fpublic = $fileuri_pathpart.'/'.$p['filename'].'.'.'jpg';
         if(file_exists($fpublic) && !$reset) {
@@ -364,7 +380,8 @@ function _coll_make_public_public0($identifier, $reset = false, $dry = false) {
   }
 
   // only tif
-  $files = _coll_get_digifiles($identifier, 'archive0', 'tif');
+  //$files = _coll_get_digifiles($identifier, 'archive0', 'tif');
+  $files = _coll_get_digifiles($identifier, 'archive0');
   if(!$files) return;
 
   $vars = _coll_ef_variables();
@@ -377,6 +394,7 @@ function _coll_make_public_public0($identifier, $reset = false, $dry = false) {
     $fileuri_pathpart   = $path_public.'/'.$pathid;
     $x = file_prepare_directory($fileuri_pathpart, FILE_CREATE_DIRECTORY | FILE_MODIFY_PERMISSIONS);
     switch ($p['extension']) {
+      case 'jpg':
       case 'tif':
         $fpublic = $fileuri_pathpart.'/'.$p['filename'].'.'.'jpg';
         if(file_exists($fpublic) && !$reset) {
@@ -395,11 +413,13 @@ function _coll_make_public_public0($identifier, $reset = false, $dry = false) {
 }
 
 function _coll_digifile_open_nomosaic($identifier) {
-  $files_nom = _coll_get_digifiles($identifier, 'archive0', 'tif');
+  //$files_nom = _coll_get_digifiles($identifier, 'archive0', 'tif');
+  $files_nom = _coll_get_digifiles($identifier, 'archive0');
 
   if(!$files_nom) return false;
 
-  $files_m   = _coll_get_digifiles($identifier, 'archive', 'tif');
+  //$files_m   = _coll_get_digifiles($identifier, 'archive', 'tif');
+  $files_m   = _coll_get_digifiles($identifier, 'archive');
 
   $vars = _coll_ef_variables();
   $path = $vars['path'];

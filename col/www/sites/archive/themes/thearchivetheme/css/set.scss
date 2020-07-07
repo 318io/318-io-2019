@@ -1,0 +1,43 @@
+.featuredimage {
+    display: inline-block;
+}
+
+.set-main {
+  h2 {
+    margin-top: 0;
+    margin-bottom: 1.5rem;
+  }
+}
+
+#sortable {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+}
+
+.set-images {
+    padding-top: 1rem;
+
+    li {
+      float: left;
+      //width: fit-content;
+      padding: 0.5rem;
+      text-align: center;
+      height: 265px;
+    }
+}
+
+.set-list-item {
+  border-bottom: 0.2rem solid lightgrey;
+
+  .set-list-item-content {
+
+    h3 {
+      margin-top: 0;
+    }
+  }
+}
+
+.button-row {
+  padding-bottom: 1rem;
+}

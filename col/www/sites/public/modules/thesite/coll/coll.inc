@@ -111,6 +111,16 @@ function _coll_l($text, $identifier, $qs = '', $row = 0) {
   return $l;
 }
 
+// 2020/2/21 chinlung added 可下載的典藏檔不能只限於 tif
+function _coll_is_archive_exist($filename) {
+  $exts = ['tif', 'jpg', 'png'];
+  foreach($exts as $ext) {
+    $archive = $filename . '.' . $ext; 
+    if(file_exists($archive)) return $ext;
+  }
+  return false;
+}
+
 function _coll_get_full_files($identifier) {
   $r = false;
   $t = null;
@@ -137,11 +147,32 @@ function _coll_get_full_files($identifier) {
         $fn = $p['filename'];
         $pathid = _coll_get_pathpart($identifier);
         $fileuri_pathpart = $vars['path']['archive'].'/'.$pathid.'/'.$fn;
-        $archive = $fileuri_pathpart.'.tif'; // todo: is all download tif?
-        if(!file_exists($archive)) $archive = false;
+        
+        // 2020/2/21 cooly modified for allowing other file extensions
+        //$archive = $fileuri_pathpart.'.tif'; // todo: is all download tif?
+        //if(!file_exists($archive)) $archive = false;
+        $fext = _coll_is_archive_exist($fileuri_pathpart);
+        if($fext != false) $archive = $fileuri_pathpart.".{$fext}";
+        else               $archive = false;
+        
         $files[$fn]['feature'] = _wg_image_style('large', $file, $identifier);
         $files[$fn]['icon'] = _wg_image_style('icon', $file, $identifier);
         if($archive) {
+          
+          // 2020/2/22 cooly midified for allowing other file extensions
+          $fext_nomosaic = _coll_is_archive_exist($vars['path']['archive0'].'/'.$pathid.'/'.$fn);
+          if($fext_nomosaic != false) {
+            $nomosaic_uri_archive = $vars['path']['archive0'] . '/' . $pathid. '/' . $fn . '.' . $fext_nomosaic;
+            $files[$fn]['nomosaic'] = file_create_url($nomosaic_uri_archive);
+            $nomosaic_uri_public = $vars['path']['public0'].'/'.$pathid.'/'.$fn.'.jpg';
+            $files[$fn]['nomosaic_public'] = $nomosaic_uri_public;
+          } else {
+            $files[$fn]['nomosaic'] = false;
+            $files[$fn]['nomosaic_public'] = false;
+          }
+
+          // 2020/2/22 replaced by upper block.
+          /*
           $nomosaic_uri_archive = $vars['path']['archive0'].'/'.$pathid.'/'.$fn.'.tif';
           if(file_exists($nomosaic_uri_archive)) {
             $files[$fn]['nomosaic'] = file_create_url($nomosaic_uri_archive);
@@ -150,8 +181,8 @@ function _coll_get_full_files($identifier) {
           } else {
             $files[$fn]['nomosaic'] = false;
             $files[$fn]['nomosaic_public'] = false;
-
           }
+          */
 
           $files[$fn]['download'] = file_create_url($archive);
         } else {

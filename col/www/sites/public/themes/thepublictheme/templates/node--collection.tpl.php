@@ -17,6 +17,7 @@
       <?php print render($content);?>
       <p><b>引用網址: </b><?php print $collection_url;?></p>
       <p><b>JSON:</b><a href="/json/<?php print $node->nid; ?>"> Download </a></p>
+      <p><b>所屬特藏集:</b><?php print $set_ids; ?></p>
       <br/><br/>
     </div>
 

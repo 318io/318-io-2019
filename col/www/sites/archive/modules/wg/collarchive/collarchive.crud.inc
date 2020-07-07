@@ -119,7 +119,7 @@ function _collarchive_crud_form_submit($form, &$form_state) {
       }
       break;
     case $values['button_export_archive']:
-      _collarchive_crud_process_export_archive($values);
+      _collarchive_crud_process_export_archive($values); // ＠collarchive.crud.export.inc
       break;
     case $values['button_sync']:
       $vars = _coll_ef_variables();
@@ -129,7 +129,7 @@ function _collarchive_crud_form_submit($form, &$form_state) {
       $options['archivefolder'] = $public_system_www_root.'/sites/318_public/files/digicoll/archive';
       $options['metafolder'] = $path['export'];
       $options['withfile'] = $values['sync_update_file'];
-      _collarchive_crud_process_export_public($options);
+      _collarchive_crud_process_export_public($options); // collarchive.crud.sync.inc 66 行
       break;
   }
   return;

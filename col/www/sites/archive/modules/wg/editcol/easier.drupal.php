@@ -6,6 +6,31 @@ function mylog($data, $file_name) {
     drupal_mkdir('public://log');
   }
   file_save_data(print_r($data,true), "public://log/$file_name", FILE_EXISTS_REPLACE);
+  //file_save_data(print_r($data,true), "public://log/$file_name", FILE_EXISTS_RENAME);
+}
+
+function myddl($data, $logfilename = NULL, $overwrite = false) {
+  if($logfilename !== NULL && is_string($logfilename)) {
+    $log = "/tmp/{$logfilename}";
+  } else {
+    $log = "/tmp/myddl.log";
+  }
+
+  $current_date = date('Y-m-d h:i:s', time());
+  $data         = print_r($data, true);
+
+  $to_print =<<<DATA
+------------------- {$current_date} -------------------
+{$data}\n
+DATA;
+  if($overwrite) file_put_contents($log, print_r($to_print, true));
+  else           file_put_contents($log, print_r($to_print, true), FILE_APPEND);
+}
+
+
+function get_drush_path() {
+  global $conf;
+  return $conf['drush_path'];
 }
 
 /*

@@ -3,6 +3,7 @@ define('COLL_FILE_BASE_SCHEMA', 'public://digicoll');
 
 require_once 'collarchive.page.inc';
 require_once 'collarchive.crud.inc';
+require_once "collarchive.crud.sync.set.php"; // 2019 set export
 require_once 'collarchive.xxx.inc';
 
 function collarchive_menu() {

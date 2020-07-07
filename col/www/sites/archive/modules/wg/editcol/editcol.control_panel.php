@@ -672,7 +672,9 @@ $(function() {
     filters : [
 	    {title : "Zip files", extensions : "zip"},
       {title : "Image files", extensions : "tif"},
-      {title : "Video files", extensions : "ogv"}
+      {title : "Image files", extensions : "jpg"},
+      {title : "Video files", extensions : "ogv"},
+      {title : "openoffice calc", extensions : "ods"},
     ],
 
     // Rename files by clicking on their titles
@@ -725,6 +727,7 @@ $(function() {
       success: function (data, status, jqXHR) {
         try {
           //closeModal();
+          //console.log(data);
           var obj = JSON.parse(data);
           var url = '/action/export/csv/' + obj.range;
           window.location.href = url;
@@ -734,6 +737,7 @@ $(function() {
         }
       },
       error: function (xhr) {
+        console.log(xhr);
         alert(xhr.statusText);
       }
     });
@@ -896,7 +900,7 @@ SCODE;
       <p><p>
   	  說明:
   	  <ul>
-  	    <li>多筆藏品上傳可一次新增多比藏品，藏品分成「單檔藏品」與「多檔藏品」兩種。</li>
+  	    <li>多筆藏品上傳可一次新增多筆藏品，藏品分成「單檔藏品」與「多檔藏品」兩種。</li>
   		  <li>「單檔藏品」指的是一件藏品只有一個檔案，此時需將檔案名稱改成「原件典藏編號」後拖曳進入上傳介面。</li>
   		  <li>「多檔藏品」指的是一件藏品有多個檔案，此時需將這些檔案置入一以「原件典藏編號」為名之目錄，然後壓縮此目錄為一 zip 檔後拖曳進入上傳介面。</li>
         <li>所有「後綴 <span style="color:red">_mosaic</span>」的檔名，皆被視為馬賽克檔，如假設典藏檔名為「foo.tif」，則相對的馬賽克檔為「foo_mosaic.tif」。</li>

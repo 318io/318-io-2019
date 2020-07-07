@@ -1,5 +1,6 @@
 <?php
 function _collarchive_crud_process_export_archive($options) {
+  sleep(10); //wait for node_save() complete
   if($options['nid_range']){
     $id_range = trim($options['nid_range']);
     $arr = DT::explode_map( '-', $id_range, array('min', 'max'));
@@ -122,7 +123,9 @@ function _collarchive_curd_batch_export_archive_finished($success, $results, $op
 
 function _collarchive_curd_batch_export_node2row_op($nids, $csv, $fmap, $entity, $options, &$context) {
   foreach($nids as $nid) {
+    //cache_clear_all("field:node:{$nid}", 'cache_field');
     $node = node_load($nid, null, true);
+    //myddl($node, "node_{$nid}.txt");
     $row0 = _coll_node2plain($fmap, $node, $entity);
     if(empty($row0['識別號'])) $row0['識別號'] = $nid;
     $row = array();

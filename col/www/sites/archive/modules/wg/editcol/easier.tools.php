@@ -25,6 +25,43 @@ function json_strip_escape($string)
   );
 }
 
+function array_get($ar, $parents, $default = null)
+{
+    if ($ar === false) {
+        return $default;
+    }
+
+    if (is_null($ar)) {
+        return $default;
+    }
+
+    if (!is_array($ar)) {
+        return false;
+    }
+
+    if (is_array($parents)) {
+        $ref = &$ar;
+        foreach ($parents as $k) {
+            if (array_get($ref, $k) !== false) {
+                $ref = &$ref[$k];
+            } else {
+                return $default;
+            }
+        }
+        return $ref;
+    } else {
+        if (!is_array($ar) || is_null($parents) || $parents === false) {
+            return $default;
+        }
+
+        if (!array_key_exists($parents, $ar)) {
+            return $default;
+        }
+
+    }
+    return $ar[$parents];
+}
+
 function random_string($length = 5) {
     return substr(str_shuffle("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"), 0, $length);
 }
@@ -51,7 +88,7 @@ function del_dir_tree($dir) {
     hello       -> hello
 */
 function extract_last_path($path) {
-  $r = split('/', $path);
+  $r = explode('/', $path);
   $size = count($r);
   $got = $r[$size-1];
   if(empty($got)) throw new Exception('extract_last_path(): empty.');
@@ -59,7 +96,9 @@ function extract_last_path($path) {
 }
 
 function extract_file_ext($file_name) {
-  $r = split('\.', $file_name);
+  $r = explode('.', $file_name);
+  if(count($r) == 1) return false;
+
   $ext = $r[count($r)-1];
   //if(empty($ext)) throw new Exception('extract_file_ext(): empty.');
   if(empty($ext)) return false;
@@ -67,7 +106,7 @@ function extract_file_ext($file_name) {
 }
 
 function filename_without_ext($file_name) {
-  $r = split('\.', $file_name);
+  $r = explode('.', $file_name);
   $size = count($r);
   if($size == 1) return $file_name; // no extension
 

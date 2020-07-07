@@ -3,6 +3,7 @@ description = A Bootstrap Sub-theme.
 core = 7.x
 base theme = bootstrap
 
+stylesheets[all][] = css/jquery-ui.min.css
 stylesheets[all][] = css/style.css
 stylesheets[all][] = color/colors.css
 stylesheets[all][] = css/local.css
@@ -53,8 +54,8 @@ scripts[] = 'bootstrap/js/collapse.js'
 ; scripts[] = 'bootstrap/js/scrollspy.js'
 scripts[] = 'bootstrap/js/tab.js'
 scripts[] = 'bootstrap/js/transition.js'
-
- scripts[] = 'js/script.js'
+scripts[] = 'js/jquery-ui.min.js'
+scripts[] = 'js/script.js'
 
 ;
 ; ; Disable BootstrapCDN if using Bootstrap source files in your sub-theme.

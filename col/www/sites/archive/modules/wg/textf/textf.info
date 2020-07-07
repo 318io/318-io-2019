@@ -1,0 +1,4 @@
+name = Sample Text field  
+description = A Sample Text Field for Drupal 7 
+package = wg
+core = 7.x

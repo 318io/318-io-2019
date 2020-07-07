@@ -1,0 +1,11 @@
+.date-padding {
+    float: unset !important;
+}
+
+#edit-field-keyword .input-group {
+  z-index: -1;
+}
+
+#edit-field-keyword .autocomplete-deluxe-container {
+  display: block;
+}

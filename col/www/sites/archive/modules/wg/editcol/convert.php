@@ -50,7 +50,7 @@ for($i = 3; $i < $argc; $i++) {
 
   if(array_key_exists($ext, $video_format)) {
     $target = $target_path . DIRECTORY_SEPARATOR . $file_name_no_ext . '.ogv';
-    $cmd = "/usr/bin/avconv -y -i $src -f ogg -q:v 5 -acodec libvorbis -aq 60 $target 2> /dev/null";
+    $cmd = "/usr/bin/ffmpeg -y -i $src -f ogg -q:v 5 -acodec libvorbis -aq 60 $target 2> /dev/null";
   } else if(array_key_exists($ext, $image_format)) {
     $target = $target_path . DIRECTORY_SEPARATOR . $file_name_no_ext . '.jpg';
     $cmd = "/usr/bin/convert $src $target 2> /dev/null";

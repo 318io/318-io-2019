@@ -1,6 +1,12 @@
 <?php
 require_once 'coll.page.block.inc';
 
+/*
+20200526, evirt note
+下面這些 _coll_node_view_XXX 都是在 collarchive/collarchive.module 下的 collarchive_node_view 被呼叫
+*/
+
+
 function _coll_node_view_license(&$node) {
   $field = &$node->content['field_license'];
   $tid = DT::array_get($field, array('#items', 0, 'tid'));
@@ -81,6 +87,8 @@ function _coll_node_view_list(&$node, $qs, $row, $identifier) {
   $node->feature_image = array('#markup' => $feature_image,);
 }
 
+
+// 2019 evirt: 從 collarchive/collarchive.module 的 collarchive_node_view 中呼叫
 function _coll_node_view_full(&$node, $qs, $row, $identifier) {
   $rowperpage = _coll_get_rowperpage();
   $ret = _coll_search($qs, $row, $rowperpage);

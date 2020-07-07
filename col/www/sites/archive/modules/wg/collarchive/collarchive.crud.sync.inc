@@ -14,7 +14,7 @@ function _collarchive_sync_drush() {
 function _collarchive_crud_process_export_public_all() {
   $vars = _coll_ef_variables();
   $path = $vars['path'];
-  $public_system_www_root = variable_get('public_system_www_root',  null);
+  $public_system_www_root = variable_get('public_system_www_root',  null);  // /data/318_public/www
   $options['digifolder'] = $public_system_www_root.'/sites/318_public/files/digicoll/public';
   $options['archivefolder'] = $public_system_www_root.'/sites/318_public/files/digicoll/archive';
   $options['metafolder'] = $path['export'];
@@ -49,9 +49,9 @@ function _collarchive_crud_process_export_public_all() {
   fclose($fp);
 
   $options['fmap'] = $fmap;
-  $op_withfile = '_collarchive_crud_batch_export_public_withfile_op';
-  $op_finish   = '_collarchive_crud_batch_export_public_finished';
-  $op_export   = '_collarchive_crud_batch_export_public_node_op';
+  $op_withfile = '_collarchive_crud_batch_export_public_withfile_op'; // 134 行
+  $op_finish   = '_collarchive_crud_batch_export_public_finished';    // 296 
+  $op_export   = '_collarchive_crud_batch_export_public_node_op';     // 151
   $redirecturl = 'admin/config/coll/archive_crud';
 
   $context = array();
@@ -63,6 +63,7 @@ function _collarchive_crud_process_export_public_all() {
   return $path;
 }
 
+// 同步
 function _collarchive_crud_process_export_public($options) {
   $opts['lang'] = 'und';
   $vars = _coll_ef_variables();
@@ -70,7 +71,7 @@ function _collarchive_crud_process_export_public($options) {
   $vars = DTEF::entity_create_prepare($vars['node']);
   $entities = $vars['entity'];
   $opts['entity'] = current($entities);
-  $opts['nodetype'] = key($entities);
+  $opts['nodetype'] = key($entities); // collection
   $entity = current($entities);
   $opts['entity'] = $entity;
   foreach ($entity['field'] as $key => $v) {
@@ -86,7 +87,10 @@ function _collarchive_crud_process_export_public($options) {
   file_prepare_directory($archivepath, FILE_CREATE_DIRECTORY | FILE_MODIFY_PERMISSIONS);
 
   $csv = DT::create_temp_file('csv', file_directory_temp());
+  $set_csv = DT::create_temp_file('csv', file_directory_temp()); // 2019 set export
   $options['csv'] = $csv;
+  $options['set_csv'] = $set_csv; // 2019 set export
+  prepare_set_csv($set_csv);      // 2019 set export, write header
   $fp = fopen($csv, 'w');
   $fmap2 = $fmap;
   $fmap2[] = 'mediainfo';
@@ -116,7 +120,7 @@ function _collarchive_crud_process_export_public($options) {
 }
 
 function _collarchive_crud_process_export_public_pre($nodetype, $options) {
-  $types = array($nodetype);
+  $types = array($nodetype, 'set'); // 2019 set export add 'set'
   $ispublis_tid = db_query("select tid from taxonomy_term_data as t, taxonomy_vocabulary as v WHERE t.vid=v.vid AND v.name = 'boolean' AND t.name = '是'")->fetchField();
   $query = db_select('node', 'n');
   $query->join('field_data_field_public', 'p', 'n.nid = p.entity_id');
@@ -128,7 +132,7 @@ function _collarchive_crud_process_export_public_pre($nodetype, $options) {
   $num_rows = $query->countQuery()->execute()->fetchField();
   $result = $query->execute();
   $nids = $result->fetchCol();
-  return $nids;
+  return $nids; // 也會包含 set 的 node
 }
 
 function _collarchive_crud_batch_export_public_withfile_op($options, &$context) {
@@ -149,21 +153,32 @@ function _collarchive_crud_batch_export_public_withfile_op($options, &$context) 
 }
 
 function _collarchive_crud_batch_export_public_node_op($nids, $entity, $options, &$context) {
-  _collarchive_crud_batch_export_public_node_op0($nids, $options['csv'], $options['fmap'], $entity, $options);
+  _collarchive_crud_batch_export_public_node_op0($nids, $options['csv'], $options['set_csv'], $options['fmap'], $entity, $options);
   $context['results']['csv'] = $options['csv'];
+  $context['results']['set_csv'] = $options['set_csv']; // 2019 set export
   $context['results']['options'] = $options;
 }
 
-function _collarchive_crud_batch_export_public_node_op0($nids, $csv, $fmap, $entity, $options) {
+function _collarchive_crud_batch_export_public_node_op0($nids, $csv, $set_csv, $fmap, $entity, $options) {
   $i = 1;
   foreach($nids as $nid) {
-    _collarchive_crud_batch_export_public_node_op0_nid($nid, $csv, $fmap, $entity, $options);
+    _collarchive_crud_batch_export_public_node_op0_nid($nid, $csv, $set_csv, $fmap, $entity, $options);
     dt_progress($i++);
   }
 }
 
-function _collarchive_crud_batch_export_public_node_op0_nid($nid, $csv, $fmap, $entity, $options) {
+function _collarchive_crud_batch_export_public_node_op0_nid($nid, $csv, $set_csv, $fmap, $entity, $options) {
   $node = node_load($nid, null, true);
+
+  // 2019 set export: 若是 set node (因為 _collarchive_crud_process_export_public_pre 會把 set 也 query 進來)
+  if($node->type == 'set') {
+    $row = prepare_set_exporting_row($node);
+    $fp = fopen($set_csv, 'a');
+    DT::fputcsv($fp, $row);
+    fclose($fp);
+    return;
+  }
+
   $row = _coll_node2plain($fmap, $node, $entity);
   $identifier = $node->nid;
   $files = _coll_get_digifiles($identifier, 'public');
@@ -293,23 +308,37 @@ function _collarchive_crud_batch_export_public_finished2($csv, $options) {
   return $uri;
 }
 
+// 2019 set export
+function _collarchive_crud_batch_export_public_finished3($csv, $options) {
+  $uri = $options['metafolder'].'/'.'set_metadata_'.date('Ymdhm_').DT::random_string(3).'.csv';
+  file_unmanaged_copy($csv, $uri, FILE_EXISTS_REPLACE);
+  return $uri;
+}
+
 function _collarchive_crud_batch_export_public_finished($success, $results, $operations) {
   if ($success) {
     $csv = $results['csv'];
+    $set_csv = $results['set_csv']; // 2019 set export
     $options = $results['options'];
     $uri = _collarchive_crud_batch_export_public_finished2($csv, $options);
+    $set_uri = _collarchive_crud_batch_export_public_finished3($set_csv, $options); // 2019 set export
     $metadataurl = file_create_url($uri);
+    $set_metadataurl = file_create_url($set_uri); // 2019 set export
     $public_system_url = variable_get('public_system_url', null);
     $msg = '<p>export complete! ';
     if(!$options['withfile']) $msg .= '(no file updated)';
     else $msg .= '(file updated)';
     $msg .= '</p>';
     $msg .= '<p>please follow these steps to updata public system:</p>';
-    $msg .= '<p>1. <a href="!metadataurl">download metadata file here (csv) </a>;</p>';
+    $msg .= '<p>1. <a href="!metadataurl">download metadata file of collections here (csv) </a>;</p>';
     $msg .= '<p>2. visit <a href="!url">!url</a> and import the downloaded file</p>';
+    $msg .= '<p>3. <a href="!set_metadataurl">download metadata file of sets here (csv) </a>;</p>';
+    $msg .= '<p>4. visit <a href="!seturl">!seturl</a> and import the downloaded file</p>';
     $msg_args = array(
                   '!metadataurl' => $metadataurl,
-                  '!url' => $public_system_url.'/admin/config/coll/public_crud'
+                  '!url' => $public_system_url.'/admin/config/coll/public_crud',
+                  '!set_metadataurl' => $set_metadataurl,                            // 2019 set export
+                  '!seturl' => $public_system_url.'/admin/config/coll/public_crud',  // TODO 2019 set export
                 );
     drupal_set_message(t($msg, $msg_args), 'warning');
     watchdog('sync', t($msg, $msg_args));

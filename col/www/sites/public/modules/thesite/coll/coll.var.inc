@@ -1,4 +1,38 @@
 <?php
+
+// 2019 set import
+function _set_ef_variables() {
+  $nodetype = array('name' => 'set', 'description' => 'a set.');
+  $field =
+    array(
+      array('is-public' => true,  'name'=>'identifier',       'label'=> '識別號',   'type'=>'text'),
+      array('is-public' => true,  'name'=>'description',      'label'=> '描述',     'type'=>'longtext', 'format'=>'normal_text'),
+      array('is-public' => true,  'name'=>'release_date',     'label'=> '發布日期',  'type'=>'text'),
+      array('is-public' => true,  'name'=>'publisher',        'label'=> '發布者',    'type'=>'text'),
+      array('is-public' => true,  'name'=>'keyword',          'label'=> '關鍵字',    'type'=>'taxon', 'vocabulary' => 'tag', 'widget'=>'tag', 'cardinality' => -1),
+      array('is-public' => true,  'name'=>'license_note',     'label'=> '姓名標示值', 'type'=>'text'),
+      array('is-public' => true,  'name'=>'license',          'label'=> '授權條款',   'type'=>'taxon', 'vocabulary' => 'license', 'widget'=>'category'),
+      array('is-public' => true,  'name'=>'location',         'label'=> '地點',      'type'=>'text'),
+      array('is-public' => true,  'name'=>'collections',      'label'=> 'collections', 'type'=>'longtext', 'format'=>'normal_text'),
+    );
+
+  $path_base = COLL_FILE_BASE_SCHEMA;
+  $path = array('is-public' => false,
+                'base' => $path_base,
+                'upload' => $path_base . '/' .'upload',
+                'export' => $path_base . '/' .'export',
+                'source' => $path_base . '/' .'source',
+                'meta' => $path_base . '/' .'meta',
+               );
+
+  $vars = array(
+            'node' => array(array('bundle'=>'node', 'entity' => $nodetype, 'field' => $field,)),
+            'path' => $path,
+          );
+  return $vars;
+}
+
+
 function _coll_ef_variables() {
   $nodetype = array('name' => 'collection', 'description' => 'a collection.');
   $field =

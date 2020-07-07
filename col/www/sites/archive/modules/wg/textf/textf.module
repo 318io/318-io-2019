@@ -1,0 +1,100 @@
+<?php
+
+/**
+ * Implements hook_field_info().
+ */
+function textf_field_info() {  
+  // Returning array. 
+  return array(  
+    // Which is called textf.
+    'textf' => array(  
+      // Name of our type will be 'Te(x/s)t field'.
+      'label' => t('Te(x/s)t field'),  
+      // Description of our type.
+      'description' => t('sample text field'),  
+      // Standart widget that will be dispalyed at once.
+      // after that we choose field type 
+      'default_widget' => 'textf_widget',                        
+      // Standart that will be dispayed right after we choose field type.
+      'default_formatter' => 'textf_formatter',  
+    ), 
+  ); 
+} 
+ 
+/**
+ * Implements hook_field_widget_info().
+ */
+function textf_field_widget_info() {  
+  // Returning massive.
+  return array(   
+    // With textf name.
+    'textf' => array(  
+      // Our widget will be named textf label.
+      'label' => t('textf label'),  
+      // Our widget will work with a field in DB under the name textf.
+      'field types' => array('textf'),  
+    ), 
+  ); 
+} 
+   
+/**
+ * Implements hook_field_formatter_info().
+ */
+function textf_field_formatter_info() {  
+  // Returning array.
+  return array(   
+      // Name of our format for code.
+      'textf_formatter' => array(  
+          // Dispalyed name of format.
+          'label' => t('Simple text field formatter'),  
+          // Field in DB with which our format will work.
+          'field types' => array('textf'),  
+      ), 
+  ); 
+}
+
+
+/**
+ * Implements hook_field_widget_form().
+ */
+function textf_field_widget_form(&$form, &$form_state, $field, $instance, $langcode, $items, $delta, $element) {
+  // Setting switch into parameters that wll work widget types that are in module.
+  switch ($instance['widget']['type']) {  
+      // If parameter case is 'textf'.
+      case 'textf':  
+        // Then we assign to textf element an array.
+        // With the following values.
+        $element['textf'] = array(  
+            // Element type 'textfield'.
+            '#type' => 'textfield',  
+            // Heading given in element settings.
+            '#title' => $element['#title'],  
+            // Widget description is given in element settings.
+            '#description' => $element['#description'], 
+            // Our widget will have standart value textfield.
+            '#default_value' => t('textfield'),  
+            // If element is required it will be indicated in settings of the very element.
+            '#required' => $element['#required'],  
+            // Element location –  
+            // If it's indicated, value should be used, if not, value is 0.
+            '#weight' => isset($element['#weight']) ? $element['#weight'] : 0, 
+            // Line that we'll need for the output.
+            '#delta' => $delta,  
+        ); 
+      break; 
+  } 
+  return $element;
+}
+
+
+/**
+ * Implements hook_field_is_empty().
+ */
+function textf_field_is_empty($item, $field) { 
+   // If there's nothing in $item['textf'].
+   if (empty($item['textf'])) { 
+        // Then we return 1, i.e. we say to Drupal that everything is fine).
+        return TRUE;  
+        // And if it's empty, nothing will be displayed.
+   } 
+}

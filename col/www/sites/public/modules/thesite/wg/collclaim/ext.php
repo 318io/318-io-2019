@@ -10,10 +10,10 @@ function _collection_claim_method($form, &$form_state, $collection_id) {
         $statement = _collection_claim_statement($pre_form_state);
     } else {
         drupal_goto("/collection/identify/{$collection_id}");
-    }    
+    }
 
     $statement2 =<<<WHAT
-    <a href="/identification_qa" target="_blank">什麼是紙本指認 / 線上指認？</a>
+    <a href="/identification_qa#info" target="_blank">什麼是紙本指認 / 線上指認？</a>
 WHAT;
 
     $form['desc'] = array(
@@ -31,8 +31,8 @@ WHAT;
     $form['collection_id'] = array(
         '#type' => 'hidden',
         '#value' => $collection_id
-    );  
-  
+    );
+
     $form['submit1'] = array(
         '#type' => 'submit',
         '#value' => t('紙本指認'),
@@ -73,7 +73,7 @@ function tranditional_claim($form, &$form_state) {
         drupal_set_message('tranditional_claim(): please follow identification steps.');
         drupal_goto("/collection/identify/{$collection_id}");
     }
-    
+
 
     //drupal_goto('/');
 }
@@ -97,21 +97,21 @@ function _online_collection_claim($form, &$form_state, $collection_id) {
     $form['collection_id'] = array(
         '#type' => 'hidden',
         '#value' => $collection_id
-    );  
+    );
 
     $form['submit'] = array(
         '#type' => 'submit',
         '#value' => t('submit'),
-    );  
+    );
     return $form;
 }
 
-  
+
 
 function _online_collection_claim_submit($form, &$form_state) {
     global $user;
     $user = user_load($user->uid);
-    
+
     $uid = $user->uid;
     $collection_id = $form_state['values']['collection_id'];
     $user_input = trim($form_state['values']['name']);
@@ -141,7 +141,7 @@ function _online_collection_claim_submit($form, &$form_state) {
             drupal_goto('/user_identified_collections');
         } else {
             drupal_set_message('請依照正確的步驟進行指認。');
-            drupal_goto("collection/identify/{$collection_id}");    
+            drupal_goto("collection/identify/{$collection_id}");
         }
 
     } else {
@@ -164,7 +164,7 @@ function _collection_claim_statement($form_state) {
         6 => t('創用 CC 「姓名標示-非商業性-禁止改作 3.0 台灣」授權條款及其後版本 (CC BY-NC-ND 3.0 TW and later)'),
         7 => t('本藏品僅供他人在合理使用範圍內使用 (Fair Use)')
     );
-    
+
     $uid           = $user->uid;
     $collection_id = $form_state['values']['collection_id'];
     $display_name  = $form_state['values']['display_name'];
@@ -179,14 +179,14 @@ function _collection_claim_statement($form_state) {
     $address      = $author['address'];
     $real_name    = $author['real_name'];
     $four_digitid = $author['4digitid'];
-    
+
 
     $statement = <<<STATEMENT
     <div id='claim_id'>$claim_id</div>
     <div id="statement">
       <h2>318 公民運動文物紀錄典藏庫</h2>
       <h2>藏品著作權利聲明及同意書</h2>
-  
+
       <ol type="I">
         <li><h3>聲明及同意事項</h3>
           <ol type="i">
@@ -246,6 +246,5 @@ function _collection_claim_statement($form_state) {
       </ol>
     </div>
 STATEMENT;
-    return $statement;  
+    return $statement;
 }
-
